@@ -21,7 +21,15 @@ type JWTHeader struct {
 	Alg string
 }
 
+type Payload struct {
+	Did   string
+	Aud   string
+	Nonce string
+	Paths []string
+	Exp   int64
+}
+
 type DidProvider interface {
 	Authenticate(params AuthParams) GeneralJWS
-	Sign(payload []byte)
+	Sign(payload []byte) GeneralJWS
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/dvsekhvalnov/jose2go/base64url"
 	"github.com/multiformats/go-multibase"
 	"strings"
+	"time"
 
 	did1 "sao-did"
 )
@@ -16,13 +17,12 @@ type Secp256k1Provider struct {
 	secretKey []byte
 }
 
-func NewSecp256k1Provider(seed []byte) Secp256k1Provider {
-	privKey := secp256k1.GenPrivKeyFromSecret(seed)
+func NewSecp256k1Provider(secretKey []byte) Secp256k1Provider {
+	privKey := secp256k1.GenPrivKeyFromSecret(secretKey)
 	pubKey := privKey.PubKey()
-	addr := pubKey.Address()
 
-	did, _ := encodeDid(addr.Bytes())
-	return Secp256k1Provider{did, seed}
+	did, _ := encodeDid(pubKey.Bytes())
+	return Secp256k1Provider{did, secretKey}
 }
 
 func encodeDid(pubKey []byte) (string, error) {
@@ -34,19 +34,13 @@ func encodeDid(pubKey []byte) (string, error) {
 	return fmt.Sprintf("did:key:" + encoded), nil
 }
 
-type Payload struct {
-	Did   string
-	Aud   string
-	Nonce string
-	Paths []string
-}
-
 func (s Secp256k1Provider) Authenticate(params did1.AuthParams) did1.GeneralJWS {
-	payload := Payload{
+	payload := did1.Payload{
 		s.did,
 		params.Aud,
 		params.Nonce,
 		params.Paths,
+		time.Now().Unix() + 600,
 	}
 	payloadBytes, _ := json.Marshal(payload)
 	return s.Sign(payloadBytes)
@@ -69,15 +63,18 @@ func createJWS(
 	headerBytes, _ := json.Marshal(header)
 	encodedPayload := encodeSection(payload)
 	protectedHeader := encodeSection(headerBytes)
-	input := encodedPayload + "." + encodedPayload
+	input := protectedHeader + "." + encodedPayload
 	sig, err := signer.Sign([]byte(input))
 	if err != nil {
 		return did1.GeneralJWS{}
 	}
-	return did1.GeneralJWS{encodedPayload, []did1.JwsSignature{{
-		Protected: protectedHeader,
-		Signature: encodeSection(sig),
-	}}}
+	return did1.GeneralJWS{
+		encodedPayload,
+		[]did1.JwsSignature{{
+			Protected: protectedHeader,
+			Signature: encodeSection(sig),
+		}},
+	}
 }
 
 func encodeSection(data []byte) string {

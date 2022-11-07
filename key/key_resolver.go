@@ -4,7 +4,7 @@ package key
 import (
 	mbase "github.com/multiformats/go-multibase"
 	codec "github.com/multiformats/go-multicodec"
-	varint "github.com/multiformats/go-varint"
+	"github.com/multiformats/go-varint"
 	"github.com/ockam-network/did"
 	did2 "sao-did"
 )
@@ -24,10 +24,10 @@ type KeyResolver struct {
 	cryptoResolverMap map[uint64]KeyToDidDocument
 }
 
-func NewKeyResolver() KeyResolver {
+func NewKeyResolver() *KeyResolver {
 	crm := make(map[uint64]KeyToDidDocument)
 	crm[uint64(codec.Secp256k1Pub)] = Secp256k1KeyResolver{}
-	return KeyResolver{cryptoResolverMap: crm}
+	return &KeyResolver{cryptoResolverMap: crm}
 }
 
 func (s *KeyResolver) Resolve(didUrl string, options did2.DidResolutionOptions) did2.DidResolutionResult {
