@@ -2,11 +2,11 @@ package key
 
 // https://w3c-ccg.github.io/did-method-key/
 import (
+	did2 "github.com/SaoNetwork/sao-did"
 	mbase "github.com/multiformats/go-multibase"
 	codec "github.com/multiformats/go-multicodec"
 	varint "github.com/multiformats/go-varint"
 	"github.com/ockam-network/did"
-	did2 "sao-did"
 )
 
 const (
