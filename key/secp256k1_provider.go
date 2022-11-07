@@ -8,7 +8,7 @@ import (
 	"github.com/multiformats/go-multibase"
 	"strings"
 
-	did1 "sao-did"
+	did1 "github.com/SaoNetwork/sao-did"
 )
 
 type Secp256k1Provider struct {

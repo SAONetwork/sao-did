@@ -1,4 +1,4 @@
-module github.com/SaoNetowrk/sao-did
+module github.com/SaoNetwork/sao-did
 
 go 1.19
 
