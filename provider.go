@@ -1,9 +1,9 @@
 package did
 
 type AuthParams struct {
-	paths []string
-	nonce string
-	aud   string
+	Paths []string
+	Nonce string
+	Aud   string
 }
 
 type GeneralJWS struct {
@@ -16,6 +16,12 @@ type JwsSignature struct {
 	Signature string
 }
 
+type JWTHeader struct {
+	Kid string
+	Alg string
+}
+
 type DidProvider interface {
 	Authenticate(params AuthParams) GeneralJWS
+	Sign(payload []byte)
 }
