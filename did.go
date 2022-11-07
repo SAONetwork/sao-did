@@ -11,18 +11,18 @@ type DidManager struct {
 	Resolver DidResolver
 }
 
-func (d DidManager) authenticate(paths []string, aud string) (string, error) {
+func (d DidManager) authenticate(paths []string, aud string) (GeneralJWS, error) {
 	if d.Provider == nil {
-		return "", xerrors.New("provider is missing.")
+		return GeneralJWS{}, xerrors.New("provider is missing.")
 	}
 	if d.Resolver == nil {
-		return "", xerrors.New("resolver is missing.")
+		return GeneralJWS{}, xerrors.New("resolver is missing.")
 	}
 	nonce := randstr.String(16)
 	jws := d.Provider.Authenticate(AuthParams{
-		aud:   aud,
-		nonce: nonce,
-		paths: paths,
+		Aud:   aud,
+		Nonce: nonce,
+		Paths: paths,
 	})
-
+	return jws, nil
 }
