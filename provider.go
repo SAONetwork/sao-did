@@ -1,5 +1,9 @@
 package did
 
+import (
+	"github.com/ipfs/go-cid"
+)
+
 type AuthParams struct {
 	Paths []string
 	Nonce string
@@ -11,9 +15,29 @@ type GeneralJWS struct {
 	Signatures []JwsSignature
 }
 
+func (g GeneralJWS) toDagJWS() DagJWS {
+	return DagJWS{
+		Payload:    g.Payload,
+		Signatures: g.Signatures,
+		Link:       nil,
+	}
+}
+
 type JwsSignature struct {
 	Protected string
 	Signature string
+}
+
+type DagJWSResult struct {
+	Jws         DagJWS
+	LinkedBlock []byte
+	CacaoBlock  []byte
+}
+
+type DagJWS struct {
+	Payload    string
+	Signatures []JwsSignature
+	Link       *cid.Cid
 }
 
 type JWTHeader struct {

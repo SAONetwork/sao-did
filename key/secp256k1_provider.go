@@ -17,15 +17,15 @@ type Secp256k1Provider struct {
 	secretKey []byte
 }
 
-func NewSecp256k1Provider(secretKey []byte) (Secp256k1Provider, error) {
+func NewSecp256k1Provider(secretKey []byte) (*Secp256k1Provider, error) {
 	privKey := secp256k1.GenPrivKeyFromSecret(secretKey)
 	pubKey := privKey.PubKey()
 
 	did, err := encodeDid(pubKey.Bytes())
 	if err != nil {
-		return Secp256k1Provider{}, err
+		return nil, err
 	}
-	return Secp256k1Provider{did, secretKey}, nil
+	return &Secp256k1Provider{did, secretKey}, nil
 }
 
 func encodeDid(pubKey []byte) (string, error) {
@@ -37,7 +37,7 @@ func encodeDid(pubKey []byte) (string, error) {
 	return fmt.Sprintf("did:key:" + encoded), nil
 }
 
-func (s Secp256k1Provider) Authenticate(params saodid.AuthParams) (saodid.GeneralJWS, error) {
+func (s *Secp256k1Provider) Authenticate(params saodid.AuthParams) (saodid.GeneralJWS, error) {
 	payload := saodid.Payload{
 		s.did,
 		params.Aud,
@@ -52,7 +52,7 @@ func (s Secp256k1Provider) Authenticate(params saodid.AuthParams) (saodid.Genera
 	return s.CreateJWS(payloadBytes)
 }
 
-func (s Secp256k1Provider) CreateJWS(
+func (s *Secp256k1Provider) CreateJWS(
 	payload []byte,
 ) (saodid.GeneralJWS, error) {
 	splits := strings.Split(s.did, ":")

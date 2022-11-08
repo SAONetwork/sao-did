@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/dvsekhvalnov/jose2go/base64url"
+	cbornode "github.com/ipfs/go-ipld-cbor"
 	"github.com/mr-tron/base58"
 	"github.com/multiformats/go-multibase"
+	"github.com/multiformats/go-multihash"
 	"github.com/thanhpk/randstr"
 	"golang.org/x/xerrors"
 	"strings"
@@ -68,8 +70,9 @@ func (d *DidManager) Authenticate(paths []string, aud string) (string, error) {
 	return payload.Did, nil
 }
 
-func (d *DidManager) CreateJWS(payload []byte) (GeneralJWS, error) {
-	return d.Provider.CreateJWS(payload)
+func (d *DidManager) CreateJWS(payload []byte) (DagJWS, error) {
+	generalJws, err := d.Provider.CreateJWS(payload)
+	return generalJws.toDagJWS(), err
 }
 
 func (d *DidManager) VerifyJWS(jws GeneralJWS) (string, error) {
@@ -159,4 +162,31 @@ func verifyJWS(jws GeneralJWS, pks []VerificationMethod) error {
 		}
 	}
 	return xerrors.New("invalid_signature: Signature invalid for JWT")
+}
+
+func (d *DidManager) CreateDagJWS(
+	payload interface{},
+	//options: CreateJWSOptions = {}
+) (DagJWSResult, error) {
+	node, err := cbornode.WrapObject(payload, multihash.SHA2_256, multihash.DefaultLengths[multihash.SHA2_256])
+	if err != nil {
+		return DagJWSResult{}, err
+	}
+	cid := node.Cid()
+	linkedBlock := node.RawData()
+	payloadCid := base64url.Encode(cid.Bytes())
+
+	//Object.assign(options, { linkedBlock: encodeBase64(linkedBlock) })
+	jws, err := d.CreateJWS([]byte(payloadCid)) //, options)
+	if err != nil {
+		return DagJWSResult{}, err
+	}
+
+	jws.Link = &cid
+
+	//if (this._capability) {
+	//const cacaoBlock = await CacaoBlock.fromCacao(this._capability)
+	//return DagJWSResult{ jws, linkedBlock, cacaoBlock: cacaoBlock.bytes }
+	//}
+	return DagJWSResult{Jws: jws, LinkedBlock: linkedBlock}, nil
 }
