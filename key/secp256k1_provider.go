@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	did1 "github.com/SaoNetwork/sao-did"
+	saodid "github.com/SaoNetwork/sao-did"
 )
 
 type Secp256k1Provider struct {
@@ -17,12 +17,15 @@ type Secp256k1Provider struct {
 	secretKey []byte
 }
 
-func NewSecp256k1Provider(secretKey []byte) Secp256k1Provider {
+func NewSecp256k1Provider(secretKey []byte) (Secp256k1Provider, error) {
 	privKey := secp256k1.GenPrivKeyFromSecret(secretKey)
 	pubKey := privKey.PubKey()
 
-	did, _ := encodeDid(pubKey.Bytes())
-	return Secp256k1Provider{did, secretKey}
+	did, err := encodeDid(pubKey.Bytes())
+	if err != nil {
+		return Secp256k1Provider{}, err
+	}
+	return Secp256k1Provider{did, secretKey}, nil
 }
 
 func encodeDid(pubKey []byte) (string, error) {
@@ -34,47 +37,53 @@ func encodeDid(pubKey []byte) (string, error) {
 	return fmt.Sprintf("did:key:" + encoded), nil
 }
 
-func (s Secp256k1Provider) Authenticate(params did1.AuthParams) did1.GeneralJWS {
-	payload := did1.Payload{
+func (s Secp256k1Provider) Authenticate(params saodid.AuthParams) (saodid.GeneralJWS, error) {
+	payload := saodid.Payload{
 		s.did,
 		params.Aud,
 		params.Nonce,
 		params.Paths,
 		time.Now().Unix() + 600,
 	}
-	payloadBytes, _ := json.Marshal(payload)
-	return s.Sign(payloadBytes)
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return saodid.GeneralJWS{}, err
+	}
+	return s.CreateJWS(payloadBytes)
 }
 
-func (s Secp256k1Provider) Sign(
+func (s Secp256k1Provider) CreateJWS(
 	payload []byte,
-) did1.GeneralJWS {
+) (saodid.GeneralJWS, error) {
 	splits := strings.Split(s.did, ":")
 	kid := s.did + "#" + splits[2]
 	signer := secp256k1.GenPrivKeyFromSecret(s.secretKey)
-	return createJWS(payload, signer, did1.JWTHeader{Kid: kid, Alg: "ES256K"})
+	return createJWS(payload, signer, saodid.JWTHeader{Kid: kid, Alg: "ES256K"})
 }
 
 func createJWS(
 	payload []byte,
 	signer *secp256k1.PrivKey,
-	header did1.JWTHeader,
-) did1.GeneralJWS {
-	headerBytes, _ := json.Marshal(header)
+	header saodid.JWTHeader,
+) (saodid.GeneralJWS, error) {
+	headerBytes, err := json.Marshal(header)
+	if err != nil {
+		return saodid.GeneralJWS{}, err
+	}
 	encodedPayload := encodeSection(payload)
 	protectedHeader := encodeSection(headerBytes)
 	input := protectedHeader + "." + encodedPayload
 	sig, err := signer.Sign([]byte(input))
 	if err != nil {
-		return did1.GeneralJWS{}
+		return saodid.GeneralJWS{}, err
 	}
-	return did1.GeneralJWS{
+	return saodid.GeneralJWS{
 		encodedPayload,
-		[]did1.JwsSignature{{
+		[]saodid.JwsSignature{{
 			Protected: protectedHeader,
 			Signature: encodeSection(sig),
 		}},
-	}
+	}, nil
 }
 
 func encodeSection(data []byte) string {
