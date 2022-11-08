@@ -17,16 +17,16 @@ type JwsSignature struct {
 }
 
 type JWTHeader struct {
-	Kid string
-	Alg string
+	Kid string `json:"kid"`
+	Alg string `json:"alg"`
 }
 
 type Payload struct {
-	Did   string
-	Aud   string
-	Nonce string
-	Paths []string
-	Exp   int64
+	Did   string   `json:"did"`
+	Aud   string   `json:"aud"`
+	Nonce string   `json:"nonce"`
+	Paths []string `json:"paths"`
+	Exp   int64    `json:"exp"`
 }
 
 type DidProvider interface {
