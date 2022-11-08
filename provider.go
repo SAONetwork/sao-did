@@ -30,6 +30,6 @@ type Payload struct {
 }
 
 type DidProvider interface {
-	Authenticate(params AuthParams) GeneralJWS
-	Sign(payload []byte) GeneralJWS
+	Authenticate(params AuthParams) (GeneralJWS, error)
+	CreateJWS(payload []byte) (GeneralJWS, error)
 }

@@ -18,7 +18,14 @@ type DidManager struct {
 	Resolver DidResolver
 }
 
-func (d DidManager) Authenticate(paths []string, aud string) (string, error) {
+func NewDidManager(provider DidProvider, resolver DidResolver) DidManager {
+	return DidManager{
+		Provider: provider,
+		Resolver: resolver,
+	}
+}
+
+func (d *DidManager) Authenticate(paths []string, aud string) (string, error) {
 	if d.Provider == nil {
 		return "", xerrors.New("provider is missing.")
 	}
@@ -26,13 +33,17 @@ func (d DidManager) Authenticate(paths []string, aud string) (string, error) {
 		return "", xerrors.New("resolver is missing.")
 	}
 	nonce := randstr.String(16)
-	jws := d.Provider.Authenticate(AuthParams{
+	jws, err := d.Provider.Authenticate(AuthParams{
 		Aud:   aud,
 		Nonce: nonce,
 		Paths: paths,
 	})
+	if err != nil {
+		return "", err
+	}
+
 	var payload Payload
-	err := base64urlToJSON(jws.Payload, &payload)
+	err = base64urlToJSON(jws.Payload, &payload)
 	if err != nil {
 		return "", xerrors.New("parse payload failed: " + err.Error())
 	}
@@ -53,10 +64,15 @@ func (d DidManager) Authenticate(paths []string, aud string) (string, error) {
 	if payload.Exp < time.Now().Unix() {
 		return "", xerrors.New("Invalid authencation response, expired")
 	}
+	d.Id = payload.Did
 	return payload.Did, nil
 }
 
-func (d DidManager) VerifyJWS(jws GeneralJWS) (string, error) {
+func (d *DidManager) CreateJWS(payload []byte) (GeneralJWS, error) {
+	return d.Provider.CreateJWS(payload)
+}
+
+func (d *DidManager) VerifyJWS(jws GeneralJWS) (string, error) {
 	//if (typeof jws !== 'string') jws = fromDagJWS(jws);
 	var header JWTHeader
 	err := base64urlToJSON(jws.Signatures[0].Protected, &header)
@@ -130,6 +146,10 @@ func verifyJWS(jws GeneralJWS, pks []VerificationMethod) error {
 		} else if pk.PublicKeyMultibase != "" {
 			_, rawPk, err = multibase.Decode(pk.PublicKeyMultibase)
 		}
+		if err != nil {
+			return xerrors.Errorf("decode pubKey failed: %v", err)
+		}
+
 		if rawPk != nil {
 			pubkey := secp256k1.PubKey{rawPk}
 

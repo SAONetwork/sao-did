@@ -2,7 +2,7 @@ package key
 
 // https://w3c-ccg.github.io/did-method-key/
 import (
-	did2 "github.com/SaoNetwork/sao-did"
+	saodid "github.com/SaoNetwork/sao-did"
 	mbase "github.com/multiformats/go-multibase"
 	codec "github.com/multiformats/go-multicodec"
 	"github.com/multiformats/go-varint"
@@ -17,7 +17,7 @@ const (
 )
 
 type KeyToDidDocument interface {
-	ResolveKey(pubKeyBytes []byte, fingerprint string) (did2.DidDocument, error)
+	ResolveKey(pubKeyBytes []byte, fingerprint string) (saodid.DidDocument, error)
 }
 
 type KeyResolver struct {
@@ -30,36 +30,36 @@ func NewKeyResolver() *KeyResolver {
 	return &KeyResolver{cryptoResolverMap: crm}
 }
 
-func (s *KeyResolver) Resolve(didUrl string, options did2.DidResolutionOptions) did2.DidResolutionResult {
+func (s *KeyResolver) Resolve(didUrl string, options saodid.DidResolutionOptions) saodid.DidResolutionResult {
 	did, err := did.Parse(didUrl)
 	if err != nil {
-		return did2.InvalidDidResult
+		return saodid.InvalidDidResult
 	}
 
 	if did.Method != keyMethod {
-		return did2.UnsupportedMethodResult
+		return saodid.UnsupportedMethodResult
 	}
 
 	_, bytes, err := mbase.Decode(did.ID)
 	if err != nil {
-		return did2.InvalidDidResult
+		return saodid.InvalidDidResult
 	}
 
 	keyType, n, err := varint.FromUvarint(bytes)
 	if err != nil {
-		return did2.InvalidDidResult
+		return saodid.InvalidDidResult
 	}
 	if n != 2 {
-		return did2.InvalidDidResult
+		return saodid.InvalidDidResult
 	}
 
 	if r, ok := s.cryptoResolverMap[keyType]; ok {
 		doc, err := r.ResolveKey(bytes[n:], did.ID)
 		if err != nil {
-			return did2.InvalidDidResult
+			return saodid.InvalidDidResult
 		}
 
-		result := did2.DidResolutionResult{}
+		result := saodid.DidResolutionResult{}
 
 		contentType := didJson
 		if options.Accept != "" {
@@ -72,10 +72,10 @@ func (s *KeyResolver) Resolve(didUrl string, options did2.DidResolutionOptions) 
 		} else if contentType == didJson {
 			result.DidDocument = doc
 		} else {
-			return did2.RepresentationNotSupportResult
+			return saodid.RepresentationNotSupportResult
 		}
 		return result
 	} else {
-		return did2.InvalidDidResult
+		return saodid.InvalidDidResult
 	}
 }
