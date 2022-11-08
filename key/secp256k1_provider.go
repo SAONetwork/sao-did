@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	did1 "sao-did"
+	did1 "github.com/SaoNetwork/sao-did"
 )
 
 type Secp256k1Provider struct {
