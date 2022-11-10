@@ -2,10 +2,12 @@ package did
 
 import (
 	"encoding/json"
+	"github.com/SaoNetwork/sao-did/key"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/dvsekhvalnov/jose2go/base64url"
 	"github.com/mr-tron/base58"
 	"github.com/multiformats/go-multibase"
+	"github.com/ockam-network/did"
 	"github.com/thanhpk/randstr"
 	"golang.org/x/xerrors"
 	"strings"
@@ -16,6 +18,20 @@ type DidManager struct {
 	Id       string
 	Provider DidProvider
 	Resolver DidResolver
+}
+
+func NewDidManagerWithDid(didString string) (*DidManager, error) {
+	did, err := did.Parse(didString)
+	if err != nil {
+		return nil, err
+	}
+	var resolver DidResolver
+	if did.Method == "key" {
+		resolver = key.NewKeyResolver()
+	} else {
+		return nil, xerrors.New("unsupported method")
+	}
+	return &DidManager{Resolver: resolver}, nil
 }
 
 func NewDidManager(provider DidProvider, resolver DidResolver) DidManager {
