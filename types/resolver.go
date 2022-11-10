@@ -1,4 +1,4 @@
-package did
+package types
 
 const (
 	InvalidDid                 = "invalidDid"

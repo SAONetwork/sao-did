@@ -1,4 +1,4 @@
-package did
+package types
 
 import (
 	"github.com/ipfs/go-cid"
@@ -15,7 +15,7 @@ type GeneralJWS struct {
 	Signatures []JwsSignature
 }
 
-func (g GeneralJWS) toDagJWS() DagJWS {
+func (g GeneralJWS) ToDagJWS() DagJWS {
 	return DagJWS{
 		Payload:    g.Payload,
 		Signatures: g.Signatures,

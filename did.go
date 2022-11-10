@@ -3,11 +3,13 @@ package did
 import (
 	"encoding/json"
 	"github.com/SaoNetwork/sao-did/key"
+	"github.com/SaoNetwork/sao-did/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/dvsekhvalnov/jose2go/base64url"
 	cbornode "github.com/ipfs/go-ipld-cbor"
 	"github.com/mr-tron/base58"
 	"github.com/multiformats/go-multibase"
+	"github.com/multiformats/go-multihash"
 	"github.com/ockam-network/did"
 	"github.com/thanhpk/randstr"
 	"golang.org/x/xerrors"
@@ -17,8 +19,8 @@ import (
 
 type DidManager struct {
 	Id       string
-	Provider DidProvider
-	Resolver DidResolver
+	Provider types.DidProvider
+	Resolver types.DidResolver
 }
 
 func NewDidManagerWithDid(didString string) (*DidManager, error) {
@@ -26,7 +28,7 @@ func NewDidManagerWithDid(didString string) (*DidManager, error) {
 	if err != nil {
 		return nil, err
 	}
-	var resolver DidResolver
+	var resolver types.DidResolver
 	if did.Method == "key" {
 		resolver = key.NewKeyResolver()
 	} else {
@@ -35,7 +37,7 @@ func NewDidManagerWithDid(didString string) (*DidManager, error) {
 	return &DidManager{Resolver: resolver}, nil
 }
 
-func NewDidManager(provider DidProvider, resolver DidResolver) DidManager {
+func NewDidManager(provider types.DidProvider, resolver types.DidResolver) DidManager {
 	return DidManager{
 		Provider: provider,
 		Resolver: resolver,
@@ -50,7 +52,7 @@ func (d *DidManager) Authenticate(paths []string, aud string) (string, error) {
 		return "", xerrors.New("resolver is missing.")
 	}
 	nonce := randstr.String(16)
-	jws, err := d.Provider.Authenticate(AuthParams{
+	jws, err := d.Provider.Authenticate(types.AuthParams{
 		Aud:   aud,
 		Nonce: nonce,
 		Paths: paths,
@@ -59,7 +61,7 @@ func (d *DidManager) Authenticate(paths []string, aud string) (string, error) {
 		return "", err
 	}
 
-	var payload Payload
+	var payload types.Payload
 	err = base64urlToJSON(jws.Payload, &payload)
 	if err != nil {
 		return "", xerrors.New("parse payload failed: " + err.Error())
@@ -85,14 +87,14 @@ func (d *DidManager) Authenticate(paths []string, aud string) (string, error) {
 	return payload.Did, nil
 }
 
-func (d *DidManager) CreateJWS(payload []byte) (DagJWS, error) {
+func (d *DidManager) CreateJWS(payload []byte) (types.DagJWS, error) {
 	generalJws, err := d.Provider.CreateJWS(payload)
-	return generalJws.toDagJWS(), err
+	return generalJws.ToDagJWS(), err
 }
 
-func (d *DidManager) VerifyJWS(jws GeneralJWS) (string, error) {
+func (d *DidManager) VerifyJWS(jws types.GeneralJWS) (string, error) {
 	//if (typeof jws !== 'string') jws = fromDagJWS(jws);
-	var header JWTHeader
+	var header types.JWTHeader
 	err := base64urlToJSON(jws.Signatures[0].Protected, &header)
 	if err != nil {
 		return "", xerrors.New("parse JWTHeader failed: " + err.Error())
@@ -102,7 +104,7 @@ func (d *DidManager) VerifyJWS(jws GeneralJWS) (string, error) {
 		return "", xerrors.New("No kid found in jws")
 	}
 
-	didResolutionResult := d.Resolver.Resolve(kid, DidResolutionOptions{})
+	didResolutionResult := d.Resolver.Resolve(kid, types.DidResolutionOptions{})
 	nextUpdate := didResolutionResult.DidDocumentMetadata.NextUpdate
 	if nextUpdate != "" {
 		// This version of the DID document has been revoked. Check if the JWS
@@ -148,7 +150,7 @@ func base64urlToJSON(str string, v any) error {
 	return json.Unmarshal(bytes, v)
 }
 
-func verifyJWS(jws GeneralJWS, pks []VerificationMethod) error {
+func verifyJWS(jws types.GeneralJWS, pks []types.VerificationMethod) error {
 	data := jws.Signatures[0].Protected + "." + jws.Payload
 
 	rawSig, err := base64url.Decode(jws.Signatures[0].Signature)
@@ -181,11 +183,11 @@ func verifyJWS(jws GeneralJWS, pks []VerificationMethod) error {
 
 func (d *DidManager) CreateDagJWS(
 	payload interface{},
-//options: CreateJWSOptions = {}
-) (DagJWSResult, error) {
+	// options: CreateJWSOptions = {}
+) (types.DagJWSResult, error) {
 	node, err := cbornode.WrapObject(payload, multihash.SHA2_256, multihash.DefaultLengths[multihash.SHA2_256])
 	if err != nil {
-		return DagJWSResult{}, err
+		return types.DagJWSResult{}, err
 	}
 	cid := node.Cid()
 	linkedBlock := node.RawData()
@@ -194,7 +196,7 @@ func (d *DidManager) CreateDagJWS(
 	//Object.assign(options, { linkedBlock: encodeBase64(linkedBlock) })
 	jws, err := d.CreateJWS([]byte(payloadCid)) //, options)
 	if err != nil {
-		return DagJWSResult{}, err
+		return types.DagJWSResult{}, err
 	}
 
 	jws.Link = &cid
@@ -203,5 +205,5 @@ func (d *DidManager) CreateDagJWS(
 	//const cacaoBlock = await CacaoBlock.fromCacao(this._capability)
 	//return DagJWSResult{ jws, linkedBlock, cacaoBlock: cacaoBlock.bytes }
 	//}
-	return DagJWSResult{Jws: jws, LinkedBlock: linkedBlock}, nil
+	return types.DagJWSResult{Jws: jws, LinkedBlock: linkedBlock}, nil
 }
