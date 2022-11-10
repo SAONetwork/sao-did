@@ -3,13 +3,12 @@ package key
 import (
 	"encoding/json"
 	"fmt"
+	saodid "github.com/SaoNetwork/sao-did/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/dvsekhvalnov/jose2go/base64url"
 	"github.com/multiformats/go-multibase"
 	"strings"
 	"time"
-
-	saodid "github.com/SaoNetwork/sao-did"
 )
 
 type Secp256k1Provider struct {

@@ -3,6 +3,7 @@ package test
 import (
 	"github.com/SaoNetwork/sao-did"
 	"github.com/SaoNetwork/sao-did/key"
+	"github.com/SaoNetwork/sao-did/types"
 	cbornode "github.com/ipfs/go-ipld-cbor"
 	"github.com/multiformats/go-multihash"
 	"testing"
@@ -15,12 +16,12 @@ func NewMockProvider() *MockProvider {
 	return &MockProvider{}
 }
 
-func (m *MockProvider) Authenticate(params did.AuthParams) (did.GeneralJWS, error) {
-	return did.GeneralJWS{}, nil
+func (m *MockProvider) Authenticate(params types.AuthParams) (types.GeneralJWS, error) {
+	return types.GeneralJWS{}, nil
 }
 
-func (m *MockProvider) CreateJWS(payload []byte) (did.GeneralJWS, error) {
-	return did.GeneralJWS{Payload: "234", Signatures: []did.JwsSignature{{Protected: "5678", Signature: "4324"}}}, nil
+func (m *MockProvider) CreateJWS(payload []byte) (types.GeneralJWS, error) {
+	return types.GeneralJWS{Payload: "234", Signatures: []types.JwsSignature{{Protected: "5678", Signature: "4324"}}}, nil
 }
 
 func TestDid(t *testing.T) {

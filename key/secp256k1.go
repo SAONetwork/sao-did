@@ -2,7 +2,7 @@ package key
 
 import (
 	"fmt"
-	did1 "github.com/SaoNetwork/sao-did"
+	did1 "github.com/SaoNetwork/sao-did/types"
 	mbase "github.com/multiformats/go-multibase"
 )
 
