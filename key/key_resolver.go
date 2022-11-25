@@ -2,11 +2,11 @@ package key
 
 // https://w3c-ccg.github.io/did-method-key/
 import (
+	"github.com/SaoNetwork/sao-did/parser"
 	saotypes "github.com/SaoNetwork/sao-did/types"
 	mbase "github.com/multiformats/go-multibase"
 	codec "github.com/multiformats/go-multicodec"
 	"github.com/multiformats/go-varint"
-	"github.com/ockam-network/did"
 )
 
 const (
@@ -31,7 +31,7 @@ func NewKeyResolver() *KeyResolver {
 }
 
 func (s *KeyResolver) Resolve(didUrl string, options saotypes.DidResolutionOptions) saotypes.DidResolutionResult {
-	did, err := did.Parse(didUrl)
+	did, err := parser.Parse(didUrl)
 	if err != nil {
 		return saotypes.InvalidDidResult
 	}

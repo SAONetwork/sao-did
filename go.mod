@@ -10,7 +10,6 @@ require (
 	github.com/multiformats/go-multicodec v0.7.0
 	github.com/multiformats/go-multihash v0.1.0
 	github.com/multiformats/go-varint v0.0.6
-	github.com/ockam-network/did v0.1.3
 	github.com/thanhpk/randstr v1.0.4
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2
 )

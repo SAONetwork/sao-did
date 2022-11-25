@@ -3,6 +3,7 @@ package did
 import (
 	"encoding/json"
 	"github.com/SaoNetwork/sao-did/key"
+	"github.com/SaoNetwork/sao-did/parser"
 	"github.com/SaoNetwork/sao-did/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/dvsekhvalnov/jose2go/base64url"
@@ -10,7 +11,6 @@ import (
 	"github.com/mr-tron/base58"
 	"github.com/multiformats/go-multibase"
 	"github.com/multiformats/go-multihash"
-	"github.com/ockam-network/did"
 	"github.com/thanhpk/randstr"
 	"golang.org/x/xerrors"
 	"strings"
@@ -24,7 +24,7 @@ type DidManager struct {
 }
 
 func NewDidManagerWithDid(didString string) (*DidManager, error) {
-	did, err := did.Parse(didString)
+	did, err := parser.Parse(didString)
 	if err != nil {
 		return nil, err
 	}
