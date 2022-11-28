@@ -96,15 +96,19 @@ func toDidDocument(content types.SidDocument, did string) (saotypes.DidDocument,
 	}
 
 	addToDoc := func(key string) error {
-		KeyName := content.Signing[len(content.Signing)-15:]
-		encodeType, rawSigning, err := multibase.Decode(content.Signing)
+		if len(key) < 15 {
+			return xerrors.New(fmt.Sprintf("invalid key length, key : %v", key))
+		}
+		KeyName := key[len(key)-15:]
+		encodeType, rawPk, err := multibase.Decode(key)
 		if err != nil {
 			return err
 		}
 		if encodeType != multibase.Base58BTC {
-			return xerrors.New(fmt.Sprintf("Signing should decode with base58BTC but get %s", multibase.EncodingToStr[encodeType]))
+			return xerrors.New(fmt.Sprintf("key should decode with base58BTC but get %s", multibase.EncodingToStr[encodeType]))
 		}
-		publicKeyBase58, err := multibase.Encode(multibase.Base58BTC, rawSigning[2:])
+		// skip varint type (2 bytes)
+		publicKeyBase58, err := multibase.Encode(multibase.Base58BTC, rawPk[2:])
 		if err != nil {
 			return err
 		}
@@ -116,12 +120,12 @@ func toDidDocument(content types.SidDocument, did string) (saotypes.DidDocument,
 			// We might want to use 'publicKeyMultibase' here if it
 			// ends up in the did-core spec.
 		}
-		if rawSigning[0] == 0xe7 {
+		if rawPk[0] == 0xe7 {
 			// it's secp256k1
 			vm.Type = "EcdsaSecp256k1Signature2019"
 			doc.VerificationMethod = append(doc.VerificationMethod, vm)
 			doc.Authentication = append(doc.Authentication, vm)
-		} else if rawSigning[0] == 0xec {
+		} else if rawPk[0] == 0xec {
 			// it's x25519
 			vm.Type = "X25519KeyAgreementKey2019"
 			doc.VerificationMethod = append(doc.VerificationMethod, vm)
