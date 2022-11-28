@@ -38,6 +38,7 @@ type DidDocument struct {
 	VerificationMethod []VerificationMethod
 	//Service            []Service
 	Authentication []any
+	KeyAgreement   []VerificationMethod
 }
 
 type VerificationMethod struct {
