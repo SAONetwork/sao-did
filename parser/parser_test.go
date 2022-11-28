@@ -73,12 +73,12 @@ func TestString(t *testing.T) {
 
 	t.Run("does not include Fragment if Path is present", func(t *testing.T) {
 		d := &DID{Method: "example", ID: "123", Path: "a/b", Fragment: "00000"}
-		assert(t, "did:example:123/a/b", d.String())
+		assert(t, "did:example:123/a/b#00000", d.String())
 	})
 
 	t.Run("does not include Fragment if PathSegments is present", func(t *testing.T) {
 		d := &DID{Method: "example", ID: "123", PathSegments: []string{"a", "b"}, Fragment: "00000"}
-		assert(t, "did:example:123/a/b", d.String())
+		assert(t, "did:example:123/a/b#00000", d.String())
 	})
 }
 
@@ -304,7 +304,7 @@ func Test_isNotValidIDChar(t *testing.T) {
 	}
 }
 
-func Test_isNotValidFragmentChar(t *testing.T) {
+func Test_isNotValidQueryFragmentChar(t *testing.T) {
 	a := []byte{'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
 		'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
 		'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
@@ -314,12 +314,12 @@ func Test_isNotValidFragmentChar(t *testing.T) {
 		':', '@',
 		'/', '?'}
 	for _, c := range a {
-		assert(t, false, isNotValidFragmentChar(c), "Input: '%c'", c)
+		assert(t, false, isNotValidQueryFragmentChar(c), "Input: '%c'", c)
 	}
 
 	a = []byte{'%', '^', '#', ' '}
 	for _, c := range a {
-		assert(t, true, isNotValidFragmentChar(c), "Input: '%c'", c)
+		assert(t, true, isNotValidQueryFragmentChar(c), "Input: '%c'", c)
 	}
 }
 
