@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	keyMethod      = "key"
+	KeyMethod      = "key"
 	didLdJson      = "application/did+ld+json"
 	didJson        = "application/did+json"
 	defaultContext = "https://w3id.org/did/v1"
@@ -36,7 +36,7 @@ func (s *KeyResolver) Resolve(didUrl string, options saotypes.DidResolutionOptio
 		return saotypes.InvalidDidResult
 	}
 
-	if did.Method != keyMethod {
+	if did.Method != KeyMethod {
 		return saotypes.UnsupportedMethodResult
 	}
 
