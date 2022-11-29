@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/SaoNetwork/sao-did/key"
 	"github.com/SaoNetwork/sao-did/parser"
+	"github.com/SaoNetwork/sao-did/sid"
 	"github.com/SaoNetwork/sao-did/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/dvsekhvalnov/jose2go/base64url"
@@ -23,15 +24,21 @@ type DidManager struct {
 	Resolver types.DidResolver
 }
 
-func NewDidManagerWithDid(didString string) (*DidManager, error) {
+func NewDidManagerWithDid(didString string, addressPrefix string, chainAddress string) (*DidManager, error) {
 	did, err := parser.Parse(didString)
 	if err != nil {
 		return nil, err
 	}
 	var resolver types.DidResolver
-	if did.Method == "key" {
+	switch did.Method {
+	case key.KeyMethod:
 		resolver = key.NewKeyResolver()
-	} else {
+	case sid.SidMethod:
+		resolver, err = sid.NewSidResolver(addressPrefix, chainAddress)
+		if err != nil {
+			return nil, err
+		}
+	default:
 		return nil, xerrors.New("unsupported method")
 	}
 	return &DidManager{Resolver: resolver}, nil
