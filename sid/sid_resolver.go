@@ -18,7 +18,7 @@ const (
 	defaultContext = "https://w3id.org/did/v1"
 )
 
-type QueryFunc = func(key string) (consensustypes.SidDocument, error)
+type QueryFunc = func(key string) (*consensustypes.SidDocument, error)
 
 type SidResolver struct {
 	query QueryFunc
@@ -46,6 +46,10 @@ func (s *SidResolver) Resolve(sidUrl string, options saotypes.DidResolutionOptio
 
 	sidDoc, err := s.query(versionId)
 	if err != nil {
+		return saotypes.InvalidDidResult
+	}
+
+	if sidDoc == nil {
 		return saotypes.InvalidDidResult
 	}
 	//res.SidDocument.
@@ -86,8 +90,7 @@ func getVersionInfo(query string) string {
 	return versionId
 }
 
-func toDidDocument(content consensustypes.SidDocument, did string) (saotypes.DidDocument, error) {
-
+func toDidDocument(content *consensustypes.SidDocument, did string) (saotypes.DidDocument, error) {
 	doc := saotypes.DidDocument{
 		Id: did,
 	}
