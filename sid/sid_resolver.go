@@ -25,6 +25,9 @@ type SidResolver struct {
 }
 
 func NewSidResolver(SidDocQuery QueryFunc) (*SidResolver, error) {
+	if SidDocQuery == nil {
+		return nil, xerrors.New("sid doc query func cannot be empty")
+	}
 	return &SidResolver{SidDocQuery}, nil
 }
 
