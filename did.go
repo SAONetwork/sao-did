@@ -24,7 +24,7 @@ type DidManager struct {
 	Resolver types.DidResolver
 }
 
-func NewDidManagerWithDid(didString string, chainAddress string) (*DidManager, error) {
+func NewDidManagerWithDid(didString string, qf sid.QueryFunc) (*DidManager, error) {
 	did, err := parser.Parse(didString)
 	if err != nil {
 		return nil, err
@@ -34,7 +34,7 @@ func NewDidManagerWithDid(didString string, chainAddress string) (*DidManager, e
 	case key.KeyMethod:
 		resolver = key.NewKeyResolver()
 	case sid.SidMethod:
-		resolver, err = sid.NewSidResolver(chainAddress)
+		resolver, err = sid.NewSidResolver(qf)
 		if err != nil {
 			return nil, err
 		}

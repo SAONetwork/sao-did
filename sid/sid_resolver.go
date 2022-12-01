@@ -1,12 +1,10 @@
 package sid
 
 import (
-	"context"
 	"fmt"
 	"github.com/SaoNetwork/sao-did/parser"
 	saotypes "github.com/SaoNetwork/sao-did/types"
-	"github.com/SaoNetwork/sao/x/did/types"
-	"github.com/ignite/cli/ignite/pkg/cosmosclient"
+	consensustypes "github.com/SaoNetwork/sao/x/did/types"
 	"github.com/multiformats/go-multibase"
 	"golang.org/x/xerrors"
 	"strings"
@@ -19,19 +17,14 @@ const (
 	defaultContext = "https://w3id.org/did/v1"
 )
 
+type QueryFunc = func(key string) (consensustypes.SidDocument, error)
+
 type SidResolver struct {
-	didClient types.QueryClient
+	query QueryFunc
 }
 
-func NewSidResolver(chainAddress string) (*SidResolver, error) {
-	cosmos, err := cosmosclient.New(context.TODO(),
-		cosmosclient.WithNodeAddress(chainAddress),
-	)
-	if err != nil {
-		return nil, err
-	}
-	client := types.NewQueryClient(cosmos.Context())
-	return &SidResolver{client}, nil
+func NewSidResolver(SidDocQuery QueryFunc) (*SidResolver, error) {
+	return &SidResolver{SidDocQuery}, nil
 }
 
 func (s *SidResolver) Resolve(sidUrl string, options saotypes.DidResolutionOptions) saotypes.DidResolutionResult {
@@ -47,12 +40,12 @@ func (s *SidResolver) Resolve(sidUrl string, options saotypes.DidResolutionOptio
 
 	versionId := getVersionInfo(sid.Query)
 
-	res, err := s.didClient.SidDocument(context.Background(), &types.QueryGetSidDocumentRequest{VersionId: versionId})
+	sidDoc, err := s.query(versionId)
 	if err != nil {
 		return saotypes.InvalidDidResult
 	}
 	//res.SidDocument.
-	result.DidDocument, err = toDidDocument(res.SidDocument, "did:sid:"+sid.ID)
+	result.DidDocument, err = toDidDocument(sidDoc, "did:sid:"+sid.ID)
 	if err != nil {
 		return saotypes.InvalidDidResult
 	}
@@ -88,7 +81,8 @@ func getVersionInfo(query string) string {
 
 	return versionId
 }
-func toDidDocument(content types.SidDocument, did string) (saotypes.DidDocument, error) {
+
+func toDidDocument(content consensustypes.SidDocument, did string) (saotypes.DidDocument, error) {
 
 	doc := saotypes.DidDocument{
 		Id: did,
