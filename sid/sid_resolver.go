@@ -2,12 +2,13 @@ package sid
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/SaoNetwork/sao-did/parser"
 	saotypes "github.com/SaoNetwork/sao-did/types"
 	consensustypes "github.com/SaoNetwork/sao/x/did/types"
 	"github.com/multiformats/go-multibase"
 	"golang.org/x/xerrors"
-	"strings"
 )
 
 const (
