@@ -23,9 +23,8 @@ type SidResolver struct {
 	didClient types.QueryClient
 }
 
-func NewSidResolver(addressPrefix string, chainAddress string) (*SidResolver, error) {
-	cosmos, err := cosmosclient.New(context.Background(),
-		cosmosclient.WithAddressPrefix(addressPrefix),
+func NewSidResolver(chainAddress string) (*SidResolver, error) {
+	cosmos, err := cosmosclient.New(context.TODO(),
 		cosmosclient.WithNodeAddress(chainAddress),
 	)
 	if err != nil {
