@@ -3,13 +3,14 @@ package sid
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/SaoNetwork/sao-did/parser"
 	saotypes "github.com/SaoNetwork/sao-did/types"
 	"github.com/SaoNetwork/sao/x/did/types"
 	"github.com/ignite/cli/ignite/pkg/cosmosclient"
 	"github.com/multiformats/go-multibase"
 	"golang.org/x/xerrors"
-	"strings"
 )
 
 const (
@@ -26,6 +27,7 @@ type SidResolver struct {
 func NewSidResolver(chainAddress string) (*SidResolver, error) {
 	cosmos, err := cosmosclient.New(context.TODO(),
 		cosmosclient.WithNodeAddress(chainAddress),
+		cosmosclient.WithHome("./"),
 	)
 	if err != nil {
 		return nil, err
