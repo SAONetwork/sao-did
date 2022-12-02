@@ -94,12 +94,7 @@ func toDidDocument(content *consensustypes.SidDocument, did string) (saotypes.Di
 	doc := saotypes.DidDocument{
 		Id: did,
 	}
-
-	addToDoc := func(key string) error {
-		if len(key) < 15 {
-			return xerrors.New(fmt.Sprintf("invalid key length, key : %v", key))
-		}
-		KeyName := key[len(key)-15:]
+	addToDoc := func(keyName string, key string) error {
 		encodeType, rawPk, err := multibase.Decode(key)
 		if err != nil {
 			return err
@@ -113,7 +108,7 @@ func toDidDocument(content *consensustypes.SidDocument, did string) (saotypes.Di
 			return err
 		}
 		vm := saotypes.VerificationMethod{
-			Id:         did + "#" + KeyName,
+			Id:         did + "#" + keyName,
 			Controller: did,
 			// remove multicodec varint
 			PublicKeyBase58: publicKeyBase58[1:],
@@ -134,13 +129,12 @@ func toDidDocument(content *consensustypes.SidDocument, did string) (saotypes.Di
 		return nil
 	}
 
-	err := addToDoc(content.Signing)
-	if err != nil {
-		return saotypes.DidDocument{}, err
+	for k, v := range content.Keys {
+		err := addToDoc(k, v)
+		if err != nil {
+			return saotypes.DidDocument{}, err
+		}
 	}
-	err = addToDoc(content.Encryption)
-	if err != nil {
-		return saotypes.DidDocument{}, err
-	}
+
 	return doc, nil
 }
