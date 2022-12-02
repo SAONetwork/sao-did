@@ -133,6 +133,6 @@ require (
 	github.com/multiformats/go-base36 v0.1.0 // indirect
 )
 
-replace github.com/SaoNetwork/sao => ../sao-consensus3
+replace github.com/SaoNetwork/sao => ../sao-consensus
 
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
