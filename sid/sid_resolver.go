@@ -2,12 +2,12 @@ package sid
 
 import (
 	"fmt"
+	"github.com/multiformats/go-multibase"
 	"strings"
 
 	"github.com/SaoNetwork/sao-did/parser"
 	saotypes "github.com/SaoNetwork/sao-did/types"
 	consensustypes "github.com/SaoNetwork/sao/x/did/types"
-	"github.com/multiformats/go-multibase"
 	"golang.org/x/xerrors"
 )
 
@@ -129,8 +129,8 @@ func toDidDocument(content *consensustypes.SidDocument, did string) (saotypes.Di
 		return nil
 	}
 
-	for k, v := range content.Keys {
-		err := addToDoc(k, v)
+	for _, key := range content.Keys {
+		err := addToDoc(key.Name, key.Value)
 		if err != nil {
 			return saotypes.DidDocument{}, err
 		}
