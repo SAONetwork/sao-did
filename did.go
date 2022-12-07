@@ -102,24 +102,17 @@ func (d *DidManager) CreateJWS(payload []byte) (types.DagJWS, error) {
 }
 
 func (d *DidManager) VerifyJWS(jws types.GeneralJWS) (string, error) {
-	//if (typeof jws !== 'string') jws = fromDagJWS(jws);
-	var header types.JWTHeader
-	err := util.Base64urlToJSON(jws.Signatures[0].Protected, &header)
+	kid, err := jws.Signatures[0].GetKid()
 	if err != nil {
-		return "", xerrors.New("parse JWTHeader failed: " + err.Error())
-	}
-	kid := header.Kid
-	if kid == "" {
-		return "", xerrors.New("No kid found in jws")
+		return "", xerrors.Errorf("invalid jws: %v", err)
 	}
 
 	if d.Id != "" {
-		headerDid, err := parser.Parse(kid)
+		didInSig, err := util.KidToDid(kid)
 		if err != nil {
 			return "", err
 		}
-		headerDidStr := strings.Join([]string{"did", headerDid.Method, headerDid.ID}, ":")
-		if headerDidStr != d.Id {
+		if didInSig != d.Id {
 			return "", xerrors.Errorf("invalid_jws: signature header's kid is not current did managers.")
 		}
 	}
