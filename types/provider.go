@@ -1,7 +1,11 @@
 package types
 
 import (
+	"github.com/SaoNetwork/sao-did/parser"
+	"github.com/SaoNetwork/sao-did/util"
 	"github.com/ipfs/go-cid"
+	"golang.org/x/xerrors"
+	"strings"
 )
 
 type AuthParams struct {
@@ -13,6 +17,24 @@ type AuthParams struct {
 type GeneralJWS struct {
 	Payload    string
 	Signatures []JwsSignature
+}
+
+func (g GeneralJWS) GetHeaderDid(jws GeneralJWS) (string, error) {
+	var header JWTHeader
+	err := util.Base64urlToJSON(jws.Signatures[0].Protected, &header)
+	if err != nil {
+		return "", xerrors.New("parse JWTHeader failed: " + err.Error())
+	}
+	kid := header.Kid
+	if kid == "" {
+		return "", nil
+	}
+
+	headerDid, err := parser.Parse(kid)
+	if err != nil {
+		return "", err
+	}
+	return strings.Join([]string{"did", headerDid.Method, headerDid.ID}, ":"), nil
 }
 
 func (g GeneralJWS) ToDagJWS() DagJWS {

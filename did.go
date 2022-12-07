@@ -1,11 +1,11 @@
 package did
 
 import (
-	"encoding/json"
 	"github.com/SaoNetwork/sao-did/key"
 	"github.com/SaoNetwork/sao-did/parser"
 	"github.com/SaoNetwork/sao-did/sid"
 	"github.com/SaoNetwork/sao-did/types"
+	"github.com/SaoNetwork/sao-did/util"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/dvsekhvalnov/jose2go/base64url"
 	cbornode "github.com/ipfs/go-ipld-cbor"
@@ -41,7 +41,9 @@ func NewDidManagerWithDid(didString string, qf sid.QueryFunc) (*DidManager, erro
 	default:
 		return nil, xerrors.New("unsupported method")
 	}
-	return &DidManager{Resolver: resolver}, nil
+	didManager := DidManager{Resolver: resolver}
+	didManager.Id = didString
+	return &didManager, nil
 }
 
 func NewDidManager(provider types.DidProvider, resolver types.DidResolver) DidManager {
@@ -69,7 +71,7 @@ func (d *DidManager) Authenticate(paths []string, aud string) (string, error) {
 	}
 
 	var payload types.Payload
-	err = base64urlToJSON(jws.Payload, &payload)
+	err = util.Base64urlToJSON(jws.Payload, &payload)
 	if err != nil {
 		return "", xerrors.New("parse payload failed: " + err.Error())
 	}
@@ -102,13 +104,24 @@ func (d *DidManager) CreateJWS(payload []byte) (types.DagJWS, error) {
 func (d *DidManager) VerifyJWS(jws types.GeneralJWS) (string, error) {
 	//if (typeof jws !== 'string') jws = fromDagJWS(jws);
 	var header types.JWTHeader
-	err := base64urlToJSON(jws.Signatures[0].Protected, &header)
+	err := util.Base64urlToJSON(jws.Signatures[0].Protected, &header)
 	if err != nil {
 		return "", xerrors.New("parse JWTHeader failed: " + err.Error())
 	}
 	kid := header.Kid
 	if kid == "" {
 		return "", xerrors.New("No kid found in jws")
+	}
+
+	if d.Id != "" {
+		headerDid, err := parser.Parse(kid)
+		if err != nil {
+			return "", err
+		}
+		headerDidStr := strings.Join([]string{"did", headerDid.Method, headerDid.ID}, ":")
+		if headerDidStr != d.Id {
+			return "", xerrors.Errorf("invalid_jws: signature header's kid is not current did managers.")
+		}
 	}
 
 	didResolutionResult := d.Resolver.Resolve(kid, types.DidResolutionOptions{})
@@ -147,14 +160,6 @@ func (d *DidManager) VerifyJWS(jws types.GeneralJWS) (string, error) {
 	// If an error is thrown it means that the payload is a CID.
 
 	return kid, nil
-}
-
-func base64urlToJSON(str string, v any) error {
-	bytes, err := base64url.Decode(str)
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal(bytes, v)
 }
 
 func verifyJWS(jws types.GeneralJWS, pks []types.VerificationMethod) error {
