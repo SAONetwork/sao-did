@@ -1,6 +1,9 @@
 package did
 
 import (
+	"strings"
+	"time"
+
 	"github.com/SaoNetwork/sao-did/key"
 	"github.com/SaoNetwork/sao-did/parser"
 	"github.com/SaoNetwork/sao-did/sid"
@@ -14,8 +17,6 @@ import (
 	"github.com/multiformats/go-multihash"
 	"github.com/thanhpk/randstr"
 	"golang.org/x/xerrors"
-	"strings"
-	"time"
 )
 
 type DidManager struct {
@@ -176,7 +177,7 @@ func verifyJWS(jws types.GeneralJWS, pks []types.VerificationMethod) error {
 		}
 
 		if rawPk != nil {
-			pubkey := secp256k1.PubKey{rawPk}
+			pubkey := secp256k1.PubKey{Key: rawPk}
 
 			if pubkey.VerifySignature([]byte(data), rawSig) {
 				return nil
