@@ -3,12 +3,13 @@ package key
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+	"time"
+
 	saodid "github.com/SaoNetwork/sao-did/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/dvsekhvalnov/jose2go/base64url"
 	"github.com/multiformats/go-multibase"
-	"strings"
-	"time"
 )
 
 type Secp256k1Provider struct {
@@ -38,11 +39,11 @@ func encodeDid(pubKey []byte) (string, error) {
 
 func (s *Secp256k1Provider) Authenticate(params saodid.AuthParams) (saodid.GeneralJWS, error) {
 	payload := saodid.Payload{
-		s.did,
-		params.Aud,
-		params.Nonce,
-		params.Paths,
-		time.Now().Unix() + 600,
+		Did:   s.did,
+		Aud:   params.Aud,
+		Nonce: params.Nonce,
+		Paths: params.Paths,
+		Exp:   time.Now().Unix() + 600,
 	}
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
@@ -77,8 +78,8 @@ func createJWS(
 		return saodid.GeneralJWS{}, err
 	}
 	return saodid.GeneralJWS{
-		encodedPayload,
-		[]saodid.JwsSignature{{
+		Payload: encodedPayload,
+		Signatures: []saodid.JwsSignature{{
 			Protected: protectedHeader,
 			Signature: encodeSection(sig),
 		}},

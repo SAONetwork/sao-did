@@ -2,12 +2,12 @@ package sid
 
 import (
 	"fmt"
-	"github.com/multiformats/go-multibase"
 	"strings"
+
+	"github.com/multiformats/go-multibase"
 
 	"github.com/SaoNetwork/sao-did/parser"
 	saotypes "github.com/SaoNetwork/sao-did/types"
-	consensustypes "github.com/SaoNetwork/sao/x/did/types"
 	"golang.org/x/xerrors"
 )
 
@@ -18,7 +18,16 @@ const (
 	defaultContext = "https://w3id.org/did/v1"
 )
 
-type QueryFunc = func(key string) (*consensustypes.SidDocument, error)
+type PubKey struct {
+	Name  string
+	Value string
+}
+type SidDocument struct {
+	VersionId string
+	Keys      []*PubKey
+}
+
+type QueryFunc = func(key string) (*SidDocument, error)
 
 type SidResolver struct {
 	query QueryFunc
@@ -90,7 +99,7 @@ func getVersionInfo(query string) string {
 	return versionId
 }
 
-func toDidDocument(content *consensustypes.SidDocument, did string) (saotypes.DidDocument, error) {
+func toDidDocument(content *SidDocument, did string) (saotypes.DidDocument, error) {
 	doc := saotypes.DidDocument{
 		Id: did,
 	}
